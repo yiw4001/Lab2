@@ -1,0 +1,69 @@
+---
+title: "activity 2"
+output: html_document
+---
+
+## activity 2
+```{r}
+library(tidyverse)
+library(readr)
+lab2 <- read_csv("D:/121~/WCM/Lab for Biostatistics/Lab2/lab2.csv")
+View(lab2)
+
+lab2_tidy <- tidyr::gather(data = lab2, key = "time_category", value = "score", -patient_id)
+arrange(lab2_tidy, patient_id)
+lab2_tidy1 <- tidyr::separate(data = lab2_tidy, col = 2, c("time", "category"), sep ="_")
+
+
+group_by(lab2_tidy1, time, category) %>%
+select(time, category, score) %>%
+summarise(mean = mean(score), sd = sd(score)) -> lab2_tidy2
+lab2_tidy2$category <- as.factor(lab2_tidy2$category)
+
+df <- data.frame(lab2_tidy2)
+
+p <- position_dodge(0.05)
+df %>%
+  mutate(time, replace(time, time == "base", "baseline")) %>%
+  mutate(time, replace(time, time == "first", "one year")) %>%
+  mutate(time, replace(time, time == "second", "two years")) %>%
+  ggplot(aes(x = time, mean, ymin = mean - sd, ymax = mean + sd, color = category, width = 0.1)) +
+  geom_point(position = p) +
+  geom_errorbar(position = p) +
+  geom_line(aes(group = category), position = p) +
+  coord_cartesian(ylim = c(0, 100))+
+    theme_bw() +
+    theme(legend.title = element_blank(), legend.position = c(0.9, 0.2))+
+  labs(y = "Sample mean and standard deviation", x = "Time of report")
+```
+
+## Homework2
+```{r}
+coverage <- read_csv("D:/121~/WCM/Lab for Biostatistics/Lab2/homework2/coverage.csv", skip = 2)
+View(coverage)
+expenditures <- read_csv("D:/121~/WCM/Lab for Biostatistics/Lab2/homework2/expenditures.csv", skip = 2)
+View(expenditures)
+```
+## Problem 4.1 tidy
+```{r}
+coverage <- slice(coverage,1:52)
+expenditures <- slice(expenditures,1:52)
+
+coverage %>%
+  tidyr::gather(key = year_category, value = coverage, -Location) %>%
+  tidyr::separate(year_category, c("Year", "Category")) -> coverage_tidy
+
+expenditures %>%
+  tidyr::gather(key = year_category, value = expenditures, -Location) %>%
+  tidyr::separate(year_category, c("Year", "Category")) -> expenditures_tidy
+
+```
+## Problem 4.2 merge
+```{r}
+coverage_tidy %>%
+  filter(Category == "Total") -> coverage_tidy1
+expenditures_tidy %>%
+  filter(Year >= 2013) -> expenditures_tidy1
+merge <- full_join(coverage_tidy1,expenditures_tidy1)
+```
+
